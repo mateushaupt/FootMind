@@ -50,8 +50,7 @@ pip --version
 ### 2\. Clonar o repositório
 
 ```bash
-git clone https://docs.github.com/pt/repositories/creating-and-managing-repositories/quickstart-for-repositories
-cd FootMind
+git clone https://github.com/mateushaupt/FootMind
 ```
 
 ### 3\. Criar e Ativar Ambiente Virtual
