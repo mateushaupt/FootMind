@@ -96,7 +96,7 @@ export FLASK_ENV="development"
 ### 6\. Inicializar o Banco de Dados
 
 ```bash
-python database/db_setup.py
+python database/dbSetup.py
 ```
 
 ### 7\. Executar o Servidor
