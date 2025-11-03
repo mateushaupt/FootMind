@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template
+from games.gameWordle.controller import game_wordle_bp
 
 # 1. Importar as configurações e o objeto de extensão (db)
 from config import Config
@@ -29,7 +30,7 @@ def create_app(config_class=Config):
     
     # Registro do Blueprint do Jogo 1
     # O prefixo /jogadores/ significa que todas as rotas em game1_bp terão este prefixo
-    # app.register_blueprint(game1_bp, url_prefix='/jogadores')
+    app.register_blueprint(game_wordle_bp)
     
     # Registro de futuros jogos
     # app.register_blueprint(game2_bp, url_prefix='/times') 
@@ -51,3 +52,5 @@ def create_app(config_class=Config):
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)
+    
+

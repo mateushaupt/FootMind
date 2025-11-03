@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adivinhe o Jogador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .game-board {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+        .guess-row {
+            display: flex;
+            justify-content: center;
+            margin: 5px 0;
+        }
+        .letter-box {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ccc;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .green { background-color: #6aaa64; color: white; }
+        .yellow { background-color: #c9b458; color: white; }
+        .gray { background-color: #787c7e; color: white; }
+        input {
+            font-size: 18px;
+            padding: 5px;
+            margin: 10px;
+        }
+        button {
+            font-size: 18px;
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+        #message {
+            margin: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adivinhe o Jogador de Futebol</h1>
+    <div id="message">Você tem 5 tentativas!</div>
+    <div class="game-board" id="gameBoard"></div>
+    <div>
+        <input type="text" id="guessInput" placeholder="Digite sua tentativa">
+        <button onclick="makeGuess()">Tentar</button>
+    </div>
+
+    <script>
+        let currentAttempt = 0;
+        const maxAttempts = 5;
+        const wordLength = {{ word_length }};
+
+        function createBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            for (let i = 0; i < maxAttempts; i++) {
+                const row = document.createElement('div');
+                row.className = 'guess-row';
+                for (let j = 0; j < wordLength; j++) {
+                    const box = document.createElement('div');
+                    box.className = 'letter-box';
+                    row.appendChild(box);
+                }
+                gameBoard.appendChild(row);
+            }
+        }
+
+        function makeGuess() {
+            const guess = document.getElementById('guessInput').value.toUpperCase();
+            if (guess.length !== wordLength) {
+                alert(`A palavra deve ter ${wordLength} letras!`);
+                return;
+            }
+
+            fetch('/guess', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    guess: guess,
+                    attempt: currentAttempt
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const row = document.getElementsByClassName('guess-row')[currentAttempt];
+                const boxes = row.children;
+
+                data.result.forEach((result, index) => {
+                    boxes[index].textContent = result.letter;
+                    boxes[index].classList.add(result.color);
+                });
+
+                if (data.won) {
+                    document.getElementById('message').textContent = 'Parabéns! Você venceu!';
+                    document.getElementById('guessInput').disabled = true;
+                } else if (data.gameOver) {
+                    document.getElementById('message').textContent = `Game Over! O jogador era ${data.answer}`;
+                    document.getElementById('guessInput').disabled = true;
+                }
+
+                currentAttempt++;
+                document.getElementById('guessInput').value = '';
+            });
+        }
+
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                makeGuess();
+            }
+        });
+
+        createBoard();
+    </script>
+</body>
+</html>
