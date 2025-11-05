@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Football Bingo - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game_bingo.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container" id="gameBingoContainer">
+    <a href="{{ url_for('index') }}" class="back-link">← Voltar para Início</a>
+    
+    <div class="game-header">
+        <h1>⚽ Football Bingo</h1>
+        <p class="subtitle">Complete o card de bingo relacionando jogadores às categorias!</p>
+    </div>
+
+    {% if error %}
+    <div class="error-message">
+        <p>{{ error }}</p>
+    </div>
+    {% else %}
+    
+    <!-- Área do Jogador Atual -->
+    <div class="current-player-section" id="currentPlayerSection">
+        <div class="player-card" id="playerCard">
+            <p class="player-label">Jogador Atual:</p>
+            <h2 class="player-name" id="playerName">Carregando...</h2>
+            <div class="player-info" id="playerInfo"></div>
+        </div>
+        
+        <div class="player-actions">
+            <button class="btn btn-skip" id="skipButton" onclick="skipPlayer()">
+                ⏭️ Pular
+            </button>
+            <button class="btn btn-wildcard" id="wildcardButton" onclick="useWildcard()">
+                🎴 Wildcard
+            </button>
+        </div>
+    </div>
+
+    <!-- Card de Bingo 4x4 -->
+    <div class="bingo-section">
+        <h3 class="bingo-title">Card de Bingo</h3>
+        <div class="bingo-grid" id="bingoGrid">
+            <!-- Células serão geradas via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Mensagem de Status -->
+    <div class="status-message" id="statusMessage"></div>
+
+    <!-- Game Over Modal -->
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2 id="gameOverTitle">🎉 Bingo Completo!</h2>
+            <p id="gameOverMessage"></p>
+            <button class="btn btn-primary" onclick="window.location.reload()">
+                Jogar Novamente
+            </button>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/game_bingo.js') }}"></script>
+<script>
+    // Inicializa o jogo quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('gameBingoContainer');
+        if (!container) return;
+        
+        {% if categories %}
+        const categories = {{ categories | tojson }};
+        const totalPlayers = {{ total_players | default(0) }};
+        
+        if (typeof initializeGameBingo === 'function') {
+            initializeGameBingo(categories, totalPlayers);
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}
+
