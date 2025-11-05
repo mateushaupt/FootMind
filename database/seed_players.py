@@ -29,7 +29,7 @@ def seed_players():
         # Lista de jogadores para inserir
         players_data = [
             {
-                'name': 'NEYMAR',
+                'name': 'NEYMAR JR',
                 'playedAt': 'Santos,Barcelona,PSG,Al-Hilal',
                 'managedBy': 'Tite,Dunga',
                 'playedWith': 'Messi,Suarez,Iniesta',
@@ -89,7 +89,7 @@ def seed_players():
                 'imageName': 'haaland.jpg'
             },
             {
-                'name': 'VINI',
+                'name': 'VINI JR',
                 'playedAt': 'Flamengo,Real Madrid',
                 'managedBy': 'Carlo Ancelotti',
                 'playedWith': 'Benzema,Modric,Rodrygo',
@@ -113,7 +113,7 @@ def seed_players():
                 'imageName': 'kane.jpg'
             },
             {
-                'name': 'SALAH',
+                'name': 'M. SALAH',
                 'playedAt': 'Basel,Chelsea,Roma,Liverpool',
                 'managedBy': 'Jurgen Klopp',
                 'playedWith': 'Mane,Firmino,Van Dijk',
