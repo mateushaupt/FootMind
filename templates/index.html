@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}FootMind - Jogos de Adivinhação de Futebol{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h2 class="hero-title">Bem-vindo ao FootMind! ⚽</h2>
+            <p class="hero-subtitle">Teste seu conhecimento sobre futebol com nossos jogos diários de adivinhação</p>
+        </div>
+    </section>
+
+    <!-- Games Grid -->
+    <section class="games-section">
+        <h2 class="section-title">Escolha um Jogo</h2>
+        
+        <div class="games-grid">
+            <!-- Game Card 1: FootWordle -->
+            <div class="game-card">
+                <div class="game-card-icon">🎯</div>
+                <h3 class="game-card-title">FootWordle</h3>
+                <p class="game-card-description">
+                    Adivinhe o nome do jogador de futebol em até 5 tentativas. 
+                    Inspirado no Wordle, mas com temática futebolística!
+                </p>
+                <div class="game-card-footer">
+                    <a href="{{ url_for('game_wordle.home') }}" class="btn btn-primary">
+                        Jogar Agora
+                    </a>
+                </div>
+            </div>
+
+            <!-- Game Card 2: FootContext (Futuro) -->
+            <div class="game-card game-card-disabled">
+                <div class="game-card-icon">🏆</div>
+                <h3 class="game-card-title">FootContext</h3>
+                <p class="game-card-description">
+                    Adivinhe o time ou contexto futebolístico através de dicas e pistas.
+                    Em breve!
+                </p>
+                <div class="game-card-footer">
+                    <button class="btn btn-disabled" disabled>
+                        Em Breve
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Card 3: FootGrade (Futuro) -->
+            <div class="game-card game-card-disabled">
+                <div class="game-card-icon">⭐</div>
+                <h3 class="game-card-title">FootGrade</h3>
+                <p class="game-card-description">
+                    Teste seus conhecimentos em um formato de quiz com múltiplas escolhas.
+                    Em breve!
+                </p>
+                <div class="game-card-footer">
+                    <button class="btn btn-disabled" disabled>
+                        Em Breve
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <h2 class="section-title">Recursos</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">📊</div>
+                <h3>Estatísticas</h3>
+                <p>Acompanhe seu desempenho e melhore suas habilidades</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🏅</div>
+                <h3>Ranking</h3>
+                <p>Compare seus resultados com outros jogadores</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📅</div>
+                <h3>Jogos Diários</h3>
+                <p>Novos desafios todos os dias para manter você engajado</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">👤</div>
+                <h3>Perfil</h3>
+                <p>Crie sua conta e salve seu progresso</p>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+

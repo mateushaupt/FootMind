@@ -29,22 +29,21 @@ def create_app(config_class=Config):
     # ==========================================================
     
     # Registro do Blueprint do Jogo 1
-    # O prefixo /jogadores/ significa que todas as rotas em game1_bp terão este prefixo
-    app.register_blueprint(game_wordle_bp)
+    # O prefixo /game-wordle significa que todas as rotas em game_wordle_bp terão este prefixo
+    app.register_blueprint(game_wordle_bp, url_prefix='/game-wordle')
     
     # Registro de futuros jogos
     # app.register_blueprint(game2_bp, url_prefix='/times') 
     # app.register_blueprint(game3_bp, url_prefix='/grade') 
 
-    # Rota Raiz (Página Inicial/Seleção de Jogos)
-    # @app.route('/')
-    # def index():
-    #     # Você pode listar os jogos disponíveis aqui
-    #     return render_template('index.html', games=[
-    #         {'name': 'FootWordle (Jogadores)', 'url': '/jogadores'},
-    #         # {'name': 'FootContext (Times)', 'url': '/times'},
-    #         # {'name': 'FootGrade (Imaculado)', 'url': '/grade'},
-    #     ])
+    # ==========================================================
+    # 5. Rotas Principais
+    # ==========================================================
+    
+    @app.route('/')
+    def index():
+        """Página inicial com lista de jogos disponíveis."""
+        return render_template('index.html')
 
     return app
 

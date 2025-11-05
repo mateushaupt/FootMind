@@ -1,0 +1,167 @@
+/* ============================================
+   FootWordle - Estilos Específicos do Jogo
+   ============================================ */
+
+.game-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.game-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.game-header h1 {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.game-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+#message {
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+}
+
+.game-board {
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+.guess-row {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+    gap: 8px;
+}
+
+.letter-box {
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--border-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    border-radius: 4px;
+    transition: var(--transition);
+    background: var(--surface-color);
+}
+
+.letter-box.green {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.letter-box.yellow {
+    background-color: var(--warning-color);
+    color: white;
+    border-color: var(--warning-color);
+}
+
+.letter-box.gray {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+.game-input-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+#guessInput {
+    font-size: 1.125rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    width: 250px;
+    max-width: 100%;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+
+#guessInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+}
+
+#guessInput:disabled {
+    background-color: var(--background-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-guess {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1.125rem;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-guess:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-guess:disabled {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.back-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .letter-box {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+
+    .game-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
