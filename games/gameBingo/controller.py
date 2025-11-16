@@ -3,6 +3,7 @@ Controller do Football Bingo
 Contém apenas as rotas e lógica de HTTP/Flask
 Toda a lógica de negócio está em model.py
 """
+import random
 from flask import Blueprint, render_template, request, jsonify, session
 from games.gameBingo.model import (
     get_random_player_list,
@@ -22,18 +23,23 @@ def home():
     Rota principal do jogo Football Bingo.
     Inicializa o jogo gerando um novo card de bingo.
     """
-    # Gera um novo card de bingo
-    categories = generate_bingo_categories()
+    # Busca todos os jogadores disponíveis
+    all_players = get_random_player_list()
     
-    # Busca lista inicial de jogadores
-    players = get_random_player_list()
-    
-    if not players:
+    if not all_players:
         return render_template('games/game_bingo.html', 
                              error="Nenhum jogador encontrado no banco de dados. Por favor, execute o seed_players.py primeiro.")
     
+    # Seleciona 42 jogadores aleatórios para este jogo
+    selected_players = random.sample(all_players, min(42, len(all_players)))
+    selected_player_ids = [p.id for p in selected_players]
+    
+    # Gera um novo card de bingo baseado apenas nos 42 jogadores selecionados
+    categories = generate_bingo_categories(selected_players=selected_players)
+    
     # Inicializa o estado do jogo na sessão
     session['bingo_categories'] = categories
+    session['bingo_selected_player_ids'] = selected_player_ids  # Armazena os IDs dos 42 jogadores
     session['bingo_used_player_ids'] = []
     session['bingo_current_player_index'] = 0
     session['bingo_wildcard_used'] = False
@@ -43,7 +49,7 @@ def home():
     # Renderiza a página do jogo
     return render_template('games/game_bingo.html', 
                          categories=categories,
-                         total_players=len(players))
+                         total_players=len(selected_players))
 
 
 @game_bingo_bp.route('/get-player', methods=['GET'])
@@ -55,18 +61,34 @@ def get_player():
         return jsonify({'error': 'Jogo não inicializado'}), 400
     
     used_player_ids = session.get('bingo_used_player_ids', [])
-    players = get_random_player_list(used_player_ids)
+    selected_player_ids = session.get('bingo_selected_player_ids', None)
+    players = get_random_player_list(used_player_ids, selected_player_ids)
     
     if not players:
+        # Calcula informações sobre os jogadores quando o jogo termina
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        total_players = len(selected_player_ids) if selected_player_ids else 0
+        used_count = len(used_player_ids)
+        remaining_count = total_players - used_count
+        
         return jsonify({
             'player': None,
             'game_over': True,
-            'message': 'Todos os jogadores foram utilizados!'
+            'message': 'Todos os jogadores foram utilizados!',
+            'total_players': total_players,
+            'used_players': used_count,
+            'remaining_players': remaining_count
         })
     
     # Pega o próximo jogador
     player = players[0]
     used_player_ids.append(player.id)
+    
+    # Calcula informações sobre os jogadores
+    selected_player_ids = session.get('bingo_selected_player_ids', [])
+    total_players = len(selected_player_ids) if selected_player_ids else 0
+    used_count = len(used_player_ids)
+    remaining_count = total_players - used_count
     
     # Atualiza a sessão
     session['bingo_used_player_ids'] = used_player_ids
@@ -79,7 +101,10 @@ def get_player():
             'nationality': player.nationality,
             'position': player.position
         },
-        'game_over': False
+        'game_over': False,
+        'total_players': total_players,
+        'used_players': used_count,
+        'remaining_players': remaining_count
     })
 
 
@@ -145,12 +170,19 @@ def check_match():
             'message': 'Categoria preenchida com sucesso!' if is_match else 'Wildcard usado com sucesso!'
         })
     else:
-        # Resposta incorreta - perde a vez
+        # Resposta incorreta - perde a vez (penalidade)
+        # Marca o jogador como usado para que não apareça novamente nesta rodada
+        used_player_ids = session.get('bingo_used_player_ids', [])
+        if player_id not in used_player_ids:
+            used_player_ids.append(player_id)
+            session['bingo_used_player_ids'] = used_player_ids
+        
         return jsonify({
             'success': False,
             'is_match': False,
-            'message': 'Jogador não corresponde à categoria selecionada. Você perdeu a vez!',
-            'skip_next': True
+            'message': 'Jogador não corresponde à categoria selecionada.',
+            'skip_next': True,
+            'penalty': True
         })
 
 
@@ -170,14 +202,93 @@ def skip():
     })
 
 
+@game_bingo_bp.route('/use-wildcard', methods=['POST'])
+def use_wildcard():
+    """
+    Usa o wildcard para completar todas as categorias que o jogador atual cobre.
+    Pode ser usado apenas uma vez.
+    """
+    if 'bingo_categories' not in session:
+        return jsonify({'error': 'Jogo não inicializado'}), 400
+    
+    # Verifica se o wildcard já foi usado
+    if session.get('bingo_wildcard_used', False):
+        return jsonify({'error': 'Wildcard já foi usado!'}), 400
+    
+    data = request.json
+    player_id = data.get('player_id')
+    
+    if not player_id:
+        return jsonify({'error': 'ID do jogador não fornecido'}), 400
+    
+    # Busca o jogador
+    player = get_player_by_id(player_id)
+    if not player:
+        return jsonify({'error': 'Jogador não encontrado'}), 404
+    
+    # Busca todas as categorias
+    categories = session.get('bingo_categories', [])
+    
+    # Encontra todas as categorias que o jogador corresponde e que ainda não foram preenchidas
+    matched_categories = []
+    for idx, category in enumerate(categories):
+        if not category.get('matched', False):
+            is_match = check_player_matches_category(player, category['name'], category['type'])
+            if is_match:
+                # Marca a categoria como preenchida
+                category['matched'] = True
+                category['player_id'] = player_id
+                categories[idx] = category
+                matched_categories.append({
+                    'id': idx,
+                    'name': category['name'],
+                    'type': category['type'],
+                    'display': category['display']
+                })
+    
+    # Atualiza a sessão
+    session['bingo_categories'] = categories
+    session['bingo_wildcard_used'] = True
+    
+    # Verifica se o bingo foi completado
+    bingo_complete = is_bingo_complete(categories)
+    completed_lines = get_bingo_lines(categories) if bingo_complete else []
+    
+    # Mensagem baseada no número de categorias completadas
+    if len(matched_categories) == 0:
+        message = 'Wildcard usado, mas o jogador não corresponde a nenhuma categoria disponível!'
+    elif len(matched_categories) == 1:
+        message = f'Wildcard usado! 1 categoria completada: {matched_categories[0]["display"]}'
+    else:
+        message = f'Wildcard usado! {len(matched_categories)} categorias completadas!'
+    
+    return jsonify({
+        'success': True,
+        'wildcard_used': True,
+        'matched_categories': matched_categories,
+        'matched_count': len(matched_categories),
+        'bingo_complete': bingo_complete,
+        'completed_lines': completed_lines,
+        'message': message
+    })
+
+
 @game_bingo_bp.route('/get-state', methods=['GET'])
 def get_state():
     """
     Retorna o estado atual do jogo.
     """
+    selected_player_ids = session.get('bingo_selected_player_ids', [])
+    used_player_ids = session.get('bingo_used_player_ids', [])
+    total_players = len(selected_player_ids) if selected_player_ids else 0
+    used_count = len(used_player_ids)
+    remaining_count = total_players - used_count
+    
     return jsonify({
         'categories': session.get('bingo_categories', []),
         'wildcard_used': session.get('bingo_wildcard_used', False),
-        'used_players_count': len(session.get('bingo_used_player_ids', []))
+        'used_players_count': used_count,
+        'total_players': total_players,
+        'remaining_players': remaining_count
     })
 

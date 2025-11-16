@@ -53,6 +53,7 @@ cover/
 
 # Database
 database/footmind.db
+footmind.db
 
 # Translations
 *.mo

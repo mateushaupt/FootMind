@@ -9,14 +9,21 @@ let currentPlayer = null;
 let wildcardUsed = false;
 let gameOver = false;
 let skipNext = false;
+let totalPlayers = 0;
+let usedPlayers = 0;
+let remainingPlayers = 0;
 
 /**
  * Inicializa o jogo com as categorias do servidor
  * @param {Array} cats - Categorias do bingo card
- * @param {number} totalPlayers - Total de jogadores disponíveis
+ * @param {number} totalPlayersCount - Total de jogadores disponíveis
  */
-function initializeGameBingo(cats, totalPlayers) {
+function initializeGameBingo(cats, totalPlayersCount) {
     categories = cats;
+    totalPlayers = totalPlayersCount;
+    usedPlayers = 0;
+    remainingPlayers = totalPlayers;
+    updatePlayersInfo();
     createBingoGrid();
     loadNextPlayer();
     updateStatusMessage('Selecione uma categoria para o jogador atual!', 'info');
@@ -89,11 +96,27 @@ function loadNextPlayer() {
         }
         
         if (data.game_over) {
+            // Atualiza informações dos jogadores antes de terminar o jogo
+            if (data.total_players !== undefined) {
+                totalPlayers = data.total_players;
+                usedPlayers = data.used_players || 0;
+                remainingPlayers = data.remaining_players || 0;
+                updatePlayersInfo();
+            }
             endGame(false, data.message || 'Todos os jogadores foram utilizados!');
             return;
         }
         
         currentPlayer = data.player;
+        
+        // Atualiza informações dos jogadores se disponíveis
+        if (data.total_players !== undefined) {
+            totalPlayers = data.total_players;
+            usedPlayers = data.used_players || 0;
+            remainingPlayers = data.remaining_players || 0;
+            updatePlayersInfo();
+        }
+        
         updatePlayerDisplay();
         updateStatusMessage('Selecione uma categoria para ' + currentPlayer.name, 'info');
         
@@ -204,10 +227,11 @@ function checkMatch(categoryId, isWildcard) {
                 }, 1500);
             }
         } else {
-            // Erro - perde a vez
-            updateStatusMessage(data.message, 'error');
+            // Erro - perde a vez (penalidade por escolha errada)
+            updateStatusMessage(data.message + ' Você perdeu uma oportunidade!', 'error');
             skipNext = true;
             
+            // Pula o próximo jogador como penalidade
             setTimeout(() => {
                 loadNextPlayer();
                 enableAllCells();
@@ -268,33 +292,67 @@ function skipPlayer() {
 }
 
 /**
- * Usa o wildcard
+ * Usa o wildcard para completar todas as categorias que o jogador atual cobre
  */
 function useWildcard() {
     if (wildcardUsed || !currentPlayer || gameOver) {
         return;
     }
     
-    if (!confirm('Deseja usar o wildcard? Você só pode usar uma vez!')) {
+    if (!confirm('Deseja usar o wildcard? Ele completará todas as categorias que o jogador atual cobre. Você só pode usar uma vez!')) {
         return;
     }
-    
-    // Pergunta qual categoria usar
-    const availableCategories = categories
-        .map((cat, idx) => ({ ...cat, index: idx }))
-        .filter(cat => !cat.matched);
-    
-    if (availableCategories.length === 0) {
-        updateStatusMessage('Não há categorias disponíveis!', 'error');
-        return;
-    }
-    
-    // Por enquanto, usa a primeira categoria disponível
-    // TODO: Permitir que o usuário escolha
-    const categoryId = availableCategories[0].index;
     
     disableAllCells();
-    checkMatch(categoryId, true);
+    
+    fetch('/game-bingo/use-wildcard', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            player_id: currentPlayer.id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            updateStatusMessage(data.error, 'error');
+            enableAllCells();
+            return;
+        }
+        
+        if (data.success) {
+            // Atualiza todas as categorias que foram completadas
+            data.matched_categories.forEach(matchedCat => {
+                categories[matchedCat.id].matched = true;
+                categories[matchedCat.id].player_id = currentPlayer.id;
+                updateBingoCell(matchedCat.id, true);
+            });
+            
+            wildcardUsed = true;
+            updateWildcardButton();
+            updateStatusMessage(data.message, 'success');
+            
+            // Verifica se o bingo foi completado
+            if (data.bingo_complete) {
+                setTimeout(() => {
+                    endGame(true, 'Parabéns! Você completou o Bingo!');
+                }, 1000);
+            } else {
+                // Carrega próximo jogador
+                setTimeout(() => {
+                    loadNextPlayer();
+                    enableAllCells();
+                }, 1500);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao usar wildcard:', error);
+        updateStatusMessage('Erro ao usar wildcard. Tente novamente.', 'error');
+        enableAllCells();
+    });
 }
 
 /**
@@ -360,6 +418,22 @@ function updateStatusMessage(message, type) {
         statusMsg.classList.add('hidden');
     } else {
         statusMsg.classList.remove('hidden');
+    }
+}
+
+/**
+ * Atualiza as informações sobre os jogadores
+ */
+function updatePlayersInfo() {
+    const playersRemainingEl = document.getElementById('playersRemaining');
+    const playerNumberEl = document.getElementById('playerNumber');
+    
+    if (playersRemainingEl) {
+        playersRemainingEl.textContent = remainingPlayers;
+    }
+    if (playerNumberEl) {
+        // Mostra o número do jogador atual (usedPlayers + 1, ou usado se já foi usado)
+        playerNumberEl.textContent = usedPlayers > 0 ? usedPlayers : 1;
     }
 }
 

@@ -7,12 +7,13 @@ from models.Player import Player
 from extensions import db
 
 
-def get_random_player_list(used_player_ids=None):
+def get_random_player_list(used_player_ids=None, selected_player_ids=None):
     """
     Busca uma lista de jogadores aleatórios do banco de dados.
     
     Args:
         used_player_ids (list): Lista de IDs de jogadores já usados
+        selected_player_ids (list): Lista de IDs dos jogadores selecionados para o jogo (42 jogadores)
         
     Returns:
         list: Lista de objetos Player aleatórios
@@ -20,12 +21,21 @@ def get_random_player_list(used_player_ids=None):
     if used_player_ids is None:
         used_player_ids = []
     
-    # Busca todos os jogadores que ainda não foram usados
-    query = Player.query
-    if used_player_ids:
-        query = query.filter(~Player.id.in_(used_player_ids))
-    
-    players = query.all()
+    # Se houver jogadores selecionados, usa apenas esses
+    if selected_player_ids:
+        # Busca apenas os jogadores selecionados que ainda não foram usados
+        available_ids = [pid for pid in selected_player_ids if pid not in used_player_ids]
+        if not available_ids:
+            return []
+        
+        players = Player.query.filter(Player.id.in_(available_ids)).all()
+    else:
+        # Busca todos os jogadores que ainda não foram usados
+        query = Player.query
+        if used_player_ids:
+            query = query.filter(~Player.id.in_(used_player_ids))
+        
+        players = query.all()
     
     if not players:
         return []
@@ -48,9 +58,12 @@ def get_player_by_id(player_id):
     return Player.query.get(player_id)
 
 
-def generate_bingo_categories():
+def generate_bingo_categories(selected_players=None):
     """
-    Gera um card de bingo com 16 categorias aleatórias baseadas nos dados dos jogadores.
+    Gera um card de bingo com 16 categorias aleatórias baseadas nos dados dos jogadores selecionados.
+    
+    Args:
+        selected_players (list): Lista de objetos Player para gerar categorias. Se None, usa todos os jogadores.
     
     Returns:
         list: Lista de 16 categorias (dicionários com 'id', 'name', 'type')
@@ -65,8 +78,11 @@ def generate_bingo_categories():
         'position': 'Posição'
     }
     
-    # Busca todos os jogadores para gerar categorias baseadas nos dados reais
-    all_players = Player.query.all()
+    # Usa os jogadores selecionados ou busca todos os jogadores
+    if selected_players is None:
+        all_players = Player.query.all()
+    else:
+        all_players = selected_players
     
     categories = []
     used_categories = set()
