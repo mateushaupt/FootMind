@@ -14,7 +14,6 @@ class Player(db.Model):
     leaguesPlayed = db.Column(db.String(200))
     position = db.Column(db.String(20))
     goals = db.Column(db.Integer)
-    imageName = db.Column(db.String(80))
 
     def __repr__(self):
         return f'<Player {self.name}>'
