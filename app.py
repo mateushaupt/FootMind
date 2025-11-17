@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template
 from games.gameWordle.controller import game_wordle_bp
 from games.gameBingo.controller import game_bingo_bp
+from games.gameDuel.controller import game_duel_bp
 
 # 1. Importar as configurações e o objeto de extensão (db)
 from config import Config
@@ -34,6 +35,9 @@ def create_app(config_class=Config):
     
     # Registro do Blueprint do Jogo 2: Football Bingo
     app.register_blueprint(game_bingo_bp, url_prefix='/game-bingo')
+    
+    # Registro do Blueprint do Jogo 3: Game Duel
+    app.register_blueprint(game_duel_bp, url_prefix='/game-duel')
     
     # Registro de futuros jogos
     # app.register_blueprint(game2_bp, url_prefix='/times') 

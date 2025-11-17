@@ -14,6 +14,10 @@ class Player(db.Model):
     leaguesPlayed = db.Column(db.String(200))
     position = db.Column(db.String(20))
     goals = db.Column(db.Integer)
+    totalGames = db.Column(db.Integer)  # Número de jogos
+    assists = db.Column(db.Integer) # Número de assistências
+    totalTrophies = db.Column(db.Integer) # Número de troféus
+    redCards = db.Column(db.Integer) # Número de cartões vermelhos
 
     def __repr__(self):
         return f'<Player {self.name}>'
