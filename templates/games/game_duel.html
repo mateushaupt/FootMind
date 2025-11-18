@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Game Duel - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game_duel.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <a href="{{ url_for('index') }}" class="back-link">← Voltar para Início</a>
+    
+    <div class="game-header">
+        <h1>⚽ Game Duel</h1>
+        <p class="subtitle">Qual jogador tem mais estatísticas?</p>
+    </div>
+
+    {% if error %}
+        <div class="error-message">
+            <p>{{ error }}</p>
+            <a href="{{ url_for('game_duel.reiniciar') }}" class="btn-reiniciar">Tentar Novamente</a>
+        </div>
+    {% elif session.game_over %}
+        <div class="game-over-container">
+            <h2 class="game-over">GAME OVER!</h2>
+            <p class="score">Você fez <strong>{{ session.pontos }}</strong> pontos.</p>
+            <a href="{{ url_for('game_duel.reiniciar') }}" class="btn-reiniciar">Jogar Novamente</a>
+        </div>
+    {% elif session.vitoria %}
+        <div class="vitoria-container">
+            <h2 class="vitoria">VOCÊ VENCEU!</h2>
+            <p class="score">Você completou os {{ session.pontos }} pontos!</p>
+            <a href="{{ url_for('game_duel.reiniciar') }}" class="btn-reiniciar">Jogar Novamente</a>
+        </div>
+    {% else %}
+        <div class="placar">
+            <span class="placar-item">❤️ Vidas: <strong>{{ session.vidas }}</strong></span>
+            <span class="placar-item">⭐ Pontos: <strong>{{ session.pontos }}</strong> / 20</span>
+        </div>
+
+        <h2 class="stat-pergunta">{{ stat_nome }}</h2>
+
+        <div class="comparacao">
+            <a href="{{ url_for('game_duel.checar_resposta', escolha='jogador1') }}" class="jogador">
+                <div class="jogador-placeholder">⚽</div>
+                <h2>{{ jogador1.name }}</h2>
+            </a>
+
+            <span class="vs">VS</span>
+
+            <a href="{{ url_for('game_duel.checar_resposta', escolha='jogador2') }}" class="jogador">
+                <div class="jogador-placeholder">⚽</div>
+                <h2>{{ jogador2.name }}</h2>
+            </a>
+        </div>
+        
+        <div class="game-actions">
+            <a href="{{ url_for('game_duel.reiniciar') }}" class="btn-reiniciar btn-secondary">Reiniciar Jogo</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/game_duel.js') }}"></script>
+{% endblock %}
+
