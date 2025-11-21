@@ -4,7 +4,7 @@ Contém apenas as rotas e lógica de HTTP/Flask
 Toda a lógica de negócio está em model.py
 """
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
-from auth.model import create_user, authenticate_user, get_user_by_id
+from auth.model import create_user, authenticate_user, get_user_by_id, update_user_nickname, update_user_password
 
 auth_bp = Blueprint('auth', __name__, template_folder='../../templates')
 
@@ -170,4 +170,102 @@ def check_auth():
             })
     
     return jsonify({'authenticated': False})
+
+
+@auth_bp.route('/profile', methods=['GET'])
+def profile():
+    """
+    Página de perfil do usuário.
+    Exibe informações e permite editar nickname e senha.
+    """
+    if 'user_id' not in session:
+        flash('Você precisa estar logado para acessar seu perfil!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    user = get_user_by_id(session['user_id'])
+    if not user:
+        flash('Usuário não encontrado!', 'error')
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/profile.html', user=user)
+
+
+@auth_bp.route('/update-nickname', methods=['POST'])
+def update_nickname():
+    """
+    Atualiza o nickname do usuário.
+    """
+    if 'user_id' not in session:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Você precisa estar logado!'}), 401
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    data = request.get_json() if request.is_json else request.form
+    new_nickname = data.get('nickname', '').strip()
+    
+    user, error = update_user_nickname(session['user_id'], new_nickname)
+    
+    if user:
+        # Atualiza a sessão com o novo nickname
+        session['user_nickname'] = user.nickname
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': 'Nickname atualizado com sucesso!',
+                'user': {
+                    'id': user.id,
+                    'nickname': user.nickname
+                }
+            })
+        
+        flash('Nickname atualizado com sucesso!', 'success')
+        return redirect(url_for('auth.profile'))
+    else:
+        if request.is_json:
+            return jsonify({'success': False, 'message': error}), 400
+        
+        flash(error, 'error')
+        return redirect(url_for('auth.profile'))
+
+
+@auth_bp.route('/update-password', methods=['POST'])
+def update_password():
+    """
+    Atualiza a senha do usuário.
+    """
+    if 'user_id' not in session:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Você precisa estar logado!'}), 401
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    data = request.get_json() if request.is_json else request.form
+    current_password = data.get('current_password', '')
+    new_password = data.get('new_password', '')
+    confirm_password = data.get('confirm_password', '')
+    
+    # Validação
+    if new_password != confirm_password:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'As senhas não coincidem!'}), 400
+        flash('As senhas não coincidem!', 'error')
+        return redirect(url_for('auth.profile'))
+    
+    success, error = update_user_password(session['user_id'], current_password, new_password)
+    
+    if success:
+        if request.is_json:
+            return jsonify({'success': True, 'message': 'Senha atualizada com sucesso!'})
+        
+        flash('Senha atualizada com sucesso!', 'success')
+        return redirect(url_for('auth.profile'))
+    else:
+        if request.is_json:
+            return jsonify({'success': False, 'message': error}), 400
+        
+        flash(error, 'error')
+        return redirect(url_for('auth.profile'))
 

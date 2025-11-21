@@ -14,23 +14,51 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
+                <nav class="nav-menu" id="nav-menu">
+                    <a href="#" class="nav-link" id="history-link">Histórico</a>
+                    <a href="#" class="nav-link" id="ranking-link">Ranking</a>
+                </nav>
+
+                <nav class="nav-menu" id="nav-menu"></nav>
+                <nav class="nav-menu" id="nav-menu"></nav>
+                <nav class="nav-menu" id="nav-menu"></nav>
+
                 <div class="logo">
                     <a href="{{ url_for('index') }}">
                         <h1>⚽ FootMind</h1>
                     </a>
                 </div>
+
+                <nav class="nav-menu" id="nav-menu"></nav>
+                <nav class="nav-menu" id="nav-menu"></nav>
+                <nav class="nav-menu" id="nav-menu"></nav>
+
+
+                
                 
                 <nav class="nav-menu" id="nav-menu">
-                    <a href="{{ url_for('index') }}" class="nav-link">Início</a>
-                    <a href="#" class="nav-link" id="history-link">Histórico</a>
                     <a href="{{ url_for('auth.login') }}" class="nav-link" id="login-link">Entrar</a>
                     <a href="{{ url_for('auth.register') }}" class="nav-link" id="register-link">Registrar</a>
                 </nav>
                 
                 <!-- User Menu (visível quando logado) -->
                 <div class="user-menu" id="user-menu" style="display: none;">
-                    <span class="user-name" id="user-name">Usuário</span>
-                    <a href="#" class="nav-link" id="logout-link">Sair</a>
+                    <div class="user-dropdown">
+                        <button class="user-name-btn" id="user-name-btn">
+                            <span id="user-name">Usuário</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu">
+                            <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
+                                <span class="dropdown-icon">👤</span>
+                                Meu Perfil
+                            </a>
+                            <a href="#" class="dropdown-item" id="logout-link">
+                                <span class="dropdown-icon">🚪</span>
+                                Sair
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

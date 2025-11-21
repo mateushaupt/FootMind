@@ -92,3 +92,73 @@ def get_user_by_id(user_id):
     """
     return User.query.get(user_id)
 
+
+def update_user_nickname(user_id, new_nickname):
+    """
+    Atualiza o nickname de um usuário.
+    
+    Args:
+        user_id (int): ID do usuário
+        new_nickname (str): Novo nickname
+        
+    Returns:
+        tuple: (User, error_message) - User atualizado ou None e mensagem de erro
+    """
+    user = get_user_by_id(user_id)
+    if not user:
+        return None, 'Usuário não encontrado'
+    
+    new_nickname = new_nickname.strip()
+    
+    # Validação
+    if not new_nickname:
+        return None, 'Nickname não pode estar vazio'
+    
+    if len(new_nickname) < 3:
+        return None, 'Nickname deve ter pelo menos 3 caracteres'
+    
+    # Verifica se o novo nickname já está em uso por outro usuário
+    existing_user = User.query.filter_by(nickname=new_nickname).first()
+    if existing_user and existing_user.id != user_id:
+        return None, 'Este nickname já está em uso'
+    
+    # Atualiza o nickname
+    user.nickname = new_nickname
+    db.session.commit()
+    
+    return user, None
+
+
+def update_user_password(user_id, current_password, new_password):
+    """
+    Atualiza a senha de um usuário.
+    
+    Args:
+        user_id (int): ID do usuário
+        current_password (str): Senha atual
+        new_password (str): Nova senha
+        
+    Returns:
+        tuple: (success, error_message) - True se sucesso, False e mensagem de erro caso contrário
+    """
+    user = get_user_by_id(user_id)
+    if not user:
+        return False, 'Usuário não encontrado'
+    
+    # Verifica a senha atual
+    if not verify_password(user.password, current_password):
+        return False, 'Senha atual incorreta'
+    
+    # Validação da nova senha
+    if not new_password:
+        return False, 'Nova senha não pode estar vazia'
+    
+    if len(new_password) < 6:
+        return False, 'Nova senha deve ter pelo menos 6 caracteres'
+    
+    # Atualiza a senha
+    user.password = hash_password(new_password)
+    db.session.commit()
+    
+    return True, None
+

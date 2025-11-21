@@ -97,6 +97,43 @@ async function checkAuthenticationStatus() {
         const userMenu = document.getElementById('user-menu');
         if (userMenu) userMenu.style.display = 'none';
     }
+    
+    // Configura o dropdown do usuário
+    setupUserDropdown();
+}
+
+/**
+ * Configura o dropdown do menu do usuário
+ */
+function setupUserDropdown() {
+    const userNameBtn = document.getElementById('user-name-btn');
+    const dropdownMenu = document.getElementById('user-dropdown-menu');
+    
+    if (!userNameBtn || !dropdownMenu) return;
+    
+    // Toggle dropdown ao clicar no nome do usuário
+    userNameBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+        userNameBtn.classList.toggle('active');
+    });
+    
+    // Fecha dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!userNameBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+            userNameBtn.classList.remove('active');
+        }
+    });
+    
+    // Fecha dropdown ao clicar em um item
+    const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', () => {
+            dropdownMenu.classList.remove('show');
+            userNameBtn.classList.remove('active');
+        });
+    });
 }
 
 /**
