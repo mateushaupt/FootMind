@@ -42,44 +42,60 @@ function setupNavigation() {
         });
     }
 
-    // Link de login (futuro)
-    if (loginLink) {
-        loginLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            // TODO: Implementar modal/login quando autenticação estiver pronta
-            console.log('Login - Em desenvolvimento');
-            // showLoginModal();
-        });
-    }
-
-    // Link de logout (futuro)
+    // Link de logout
     if (logoutLink) {
         logoutLink.addEventListener('click', function(e) {
             e.preventDefault();
-            // TODO: Implementar logout quando autenticação estiver pronta
-            console.log('Logout - Em desenvolvimento');
-            // handleLogout();
+            handleLogout();
         });
     }
 }
 
 /**
  * Verifica o status de autenticação do usuário
- * TODO: Implementar quando autenticação estiver pronta
  */
-function checkAuthenticationStatus() {
-    // Por enquanto, sempre mostra como não logado
-    const isLoggedIn = false; // TODO: Verificar session/cookie
-    
-    const userMenu = document.getElementById('user-menu');
-    const loginLink = document.getElementById('login-link');
-    
-    if (isLoggedIn) {
-        if (userMenu) userMenu.style.display = 'flex';
-        if (loginLink) loginLink.style.display = 'none';
-    } else {
+async function checkAuthenticationStatus() {
+    try {
+        const response = await fetch('/auth/check-auth');
+        const data = await response.json();
+        
+        const userMenu = document.getElementById('user-menu');
+        const navMenu = document.getElementById('nav-menu');
+        const userName = document.getElementById('user-name');
+        
+        if (data.authenticated && data.user) {
+            // Usuário logado
+            if (userMenu) {
+                userMenu.style.display = 'flex';
+            }
+            if (navMenu) {
+                // Esconde links de login/registro
+                const loginLink = document.getElementById('login-link');
+                const registerLink = document.getElementById('register-link');
+                if (loginLink) loginLink.style.display = 'none';
+                if (registerLink) registerLink.style.display = 'none';
+            }
+            if (userName) {
+                userName.textContent = data.user.nickname;
+            }
+        } else {
+            // Usuário não logado
+            if (userMenu) {
+                userMenu.style.display = 'none';
+            }
+            if (navMenu) {
+                // Mostra links de login/registro
+                const loginLink = document.getElementById('login-link');
+                const registerLink = document.getElementById('register-link');
+                if (loginLink) loginLink.style.display = 'inline-block';
+                if (registerLink) registerLink.style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        // Em caso de erro, assume que não está logado
+        const userMenu = document.getElementById('user-menu');
         if (userMenu) userMenu.style.display = 'none';
-        if (loginLink) loginLink.style.display = 'inline-block';
     }
 }
 
@@ -105,14 +121,29 @@ function showLoginModal() {
 
 /**
  * Processa logout do usuário
- * TODO: Implementar quando autenticação estiver pronta
  */
-function handleLogout() {
-    // Implementação futura
-    console.log('Processar logout');
-    // Fazer requisição para /logout
-    // Limpar session/cookies
-    // Recarregar página
+async function handleLogout() {
+    try {
+        const response = await fetch('/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Recarrega a página para atualizar o estado
+            window.location.href = '/';
+        } else {
+            console.error('Erro ao fazer logout:', data.message);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer logout:', error);
+        // Mesmo com erro, tenta recarregar a página
+        window.location.href = '/';
+    }
 }
 
 // ============================================

@@ -20,10 +20,11 @@
                     </a>
                 </div>
                 
-                <nav class="nav-menu">
+                <nav class="nav-menu" id="nav-menu">
                     <a href="{{ url_for('index') }}" class="nav-link">Início</a>
                     <a href="#" class="nav-link" id="history-link">Histórico</a>
-                    <a href="#" class="nav-link" id="login-link">Entrar</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link" id="login-link">Entrar</a>
+                    <a href="{{ url_for('auth.register') }}" class="nav-link" id="register-link">Registrar</a>
                 </nav>
                 
                 <!-- User Menu (visível quando logado) -->
