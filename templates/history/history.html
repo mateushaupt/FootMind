@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Histórico - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <div class="history-header">
+        <h1 class="history-title">📊 Meu Histórico</h1>
+        <p class="history-subtitle">Veja todos os seus jogos e estatísticas</p>
+    </div>
+    
+    <!-- Estatísticas Gerais -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_games }}</div>
+            <div class="stat-label">Total de Jogos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_wins }}</div>
+            <div class="stat-label">Vitórias</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ win_rate }}%</div>
+            <div class="stat-label">Taxa de Vitória</div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas por Tipo de Jogo -->
+    {% if games_by_type %}
+    <div class="games-by-type-section">
+        <h2 class="section-title">Por Tipo de Jogo</h2>
+        <div class="games-type-grid">
+            {% for game_type, stats in games_by_type.items() %}
+            <div class="game-type-card">
+                <h3>{{ game_type|title }}</h3>
+                <div class="game-type-stats">
+                    <div class="game-stat">
+                        <span class="game-stat-label">Jogos:</span>
+                        <span class="game-stat-value">{{ stats.total }}</span>
+                    </div>
+                    {% if game_type == 'duel' %}
+                    <!-- Para Duel, mostra pontos ao invés de vitórias -->
+                    <div class="game-stat">
+                        <span class="game-stat-label">Total de Pontos:</span>
+                        <span class="game-stat-value">{{ stats.get('total_points', 0) }}</span>
+                    </div>
+                    <div class="game-stat">
+                        <span class="game-stat-label">Média:</span>
+                        <span class="game-stat-value">{{ ((stats.get('total_points', 0) / stats.total) if stats.total > 0 else 0)|round(1) }}</span>
+                    </div>
+                    {% else %}
+                    <!-- Para outros jogos, mostra vitórias -->
+                    <div class="game-stat">
+                        <span class="game-stat-label">Vitórias:</span>
+                        <span class="game-stat-value">{{ stats.wins }}</span>
+                    </div>
+                    <div class="game-stat">
+                        <span class="game-stat-label">Taxa:</span>
+                        <span class="game-stat-value">{{ ((stats.wins / stats.total * 100) if stats.total > 0 else 0)|round(1) }}%</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Lista de Jogos -->
+    <div class="history-list-section">
+        <h2 class="section-title">Histórico de Jogos</h2>
+        
+        {% if history %}
+        <div class="history-table">
+            <div class="history-table-header">
+                <div class="history-col-date">Data</div>
+                <div class="history-col-game">Jogo</div>
+                <div class="history-col-result">Resultado</div>
+            </div>
+            
+            {% for game in history %}
+            <div class="history-table-row">
+                <div class="history-col-date">
+                    {{ game.date }}
+                </div>
+                <div class="history-col-game">
+                    {{ game.get('game_type_display', game.game_type|title) }}
+                </div>
+                <div class="history-col-result">
+                    {% if game.game_type == 'duel' %}
+                        <!-- Para Duel, mostra os pontos -->
+                        <span class="result-badge result-points">
+                            {{ game.points }} pontos
+                        </span>
+                    {% else %}
+                        <!-- Para outros jogos, mostra vitória/derrota -->
+                        {% if game.won %}
+                            <span class="result-badge result-win">✓ Vitória</span>
+                        {% else %}
+                            <span class="result-badge result-loss">✗ Derrota</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Você ainda não jogou nenhum jogo.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Começar a Jogar</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

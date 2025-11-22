@@ -13,6 +13,7 @@ from games.gameBingo.model import (
     is_bingo_complete,
     get_bingo_lines
 )
+from history.model import save_game_result
 
 game_bingo_bp = Blueprint('game_bingo', __name__, template_folder='../../templates/games')
 
@@ -21,8 +22,53 @@ game_bingo_bp = Blueprint('game_bingo', __name__, template_folder='../../templat
 def home():
     """
     Rota principal do jogo Football Bingo.
-    Inicializa o jogo gerando um novo card de bingo.
+    Inicializa o jogo gerando um novo card de bingo com a mesma configuração do dia.
+    Verifica se o usuário já jogou o jogo do dia.
     """
+    from history.model import get_or_create_history_game, get_today_date_string, has_user_played_today
+    from models.HistoryGame import HistoryGame
+    import hashlib
+    
+    # Verifica PRIMEIRO se há resultado salvo na sessão (jogo já foi finalizado)
+    if session.get('bingo_result_saved', False) and 'user_id' in session:
+        # Busca o resultado do banco de dados
+        today = get_today_date_string()
+        all_players = get_random_player_list()
+        if all_players:
+            date_hash = int(hashlib.md5(today.encode()).hexdigest(), 16)
+            random.seed(date_hash)
+            selected_players = random.sample(all_players, min(42, len(all_players)))
+            selected_player_ids = [p.id for p in selected_players]
+            random.seed()
+            config_data = {'selected_player_ids': sorted(selected_player_ids)}
+            
+            has_played, user_game = has_user_played_today(
+                session['user_id'],
+                'bingo',
+                config_data
+            )
+            
+            if has_played:
+                # Limpa todas as variáveis de sessão do bingo
+                session.pop('bingo_categories', None)
+                session.pop('bingo_selected_player_ids', None)
+                session.pop('bingo_used_player_ids', None)
+                session.pop('bingo_current_player_index', None)
+                session.pop('bingo_wildcard_used', None)
+                session.pop('bingo_skipped', None)
+                session.pop('bingo_game_over', None)
+                session.pop('bingo_result_saved', None)
+                session.pop('bingo_history_game_id', None)
+                
+                history_game = HistoryGame.query.get(user_game.gameId)
+                return render_template(
+                    'games/game_result.html',
+                    game_type='bingo',
+                    game_type_display='Football Bingo',
+                    won=user_game.result == 1,
+                    date=history_game.dateCreated if history_game else today
+                )
+    
     # Busca todos os jogadores disponíveis
     all_players = get_random_player_list()
     
@@ -30,12 +76,94 @@ def home():
         return render_template('games/game_bingo.html', 
                              error="Nenhum jogador encontrado no banco de dados. Por favor, execute o seed_players.py primeiro.")
     
-    # Seleciona 42 jogadores aleatórios para este jogo
+    # Usa a data como seed para garantir a mesma configuração para todos no mesmo dia
+    today = get_today_date_string()
+    date_hash = int(hashlib.md5(today.encode()).hexdigest(), 16)
+    random.seed(date_hash)
+    
+    # Seleciona 42 jogadores aleatórios baseado no seed da data
     selected_players = random.sample(all_players, min(42, len(all_players)))
     selected_player_ids = [p.id for p in selected_players]
     
+    # Restaura o seed aleatório
+    random.seed()
+    
+    # Cria o configHash do dia para garantir que todos usem a mesma configuração
+    config_data = {
+        'selected_player_ids': sorted(selected_player_ids)
+    }
+    
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        has_played, user_game = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        
+        if has_played:
+            # Limpa todas as variáveis de sessão do bingo para evitar conflitos
+            session.pop('bingo_categories', None)
+            session.pop('bingo_selected_player_ids', None)
+            session.pop('bingo_used_player_ids', None)
+            session.pop('bingo_current_player_index', None)
+            session.pop('bingo_wildcard_used', None)
+            session.pop('bingo_skipped', None)
+            session.pop('bingo_game_over', None)
+            session.pop('bingo_result_saved', None)
+            session.pop('bingo_history_game_id', None)
+            
+            # Usuário já jogou - mostra resultado
+            history_game = HistoryGame.query.get(user_game.gameId)
+            return render_template(
+                'games/game_result.html',
+                game_type='bingo',
+                game_type_display='Football Bingo',
+                won=user_game.result == 1,
+                date=history_game.dateCreated if history_game else today
+            )
+    
+    # Se chegou aqui, o usuário pode jogar (não está logado ou ainda não jogou hoje)
+    # Busca todos os jogadores disponíveis
+    all_players = get_random_player_list()
+    
+    if not all_players:
+        return render_template('games/game_bingo.html', 
+                             error="Nenhum jogador encontrado no banco de dados. Por favor, execute o seed_players.py primeiro.")
+    
+    # Usa a data como seed para garantir a mesma configuração para todos no mesmo dia
+    today = get_today_date_string()
+    date_hash = int(hashlib.md5(today.encode()).hexdigest(), 16)
+    random.seed(date_hash)
+    
+    # Seleciona 42 jogadores aleatórios baseado no seed da data
+    selected_players = random.sample(all_players, min(42, len(all_players)))
+    selected_player_ids = [p.id for p in selected_players]
+    
+    # Restaura o seed aleatório
+    random.seed()
+    
+    # Cria o configHash do dia para garantir que todos usem a mesma configuração
+    config_data = {
+        'selected_player_ids': sorted(selected_player_ids)
+    }
+    
+    # Só gera o jogo se o usuário ainda não jogou
+    history_game = get_or_create_history_game('bingo', config_data)
+    
     # Gera um novo card de bingo baseado apenas nos 42 jogadores selecionados
     categories = generate_bingo_categories(selected_players=selected_players)
+    
+    # Limpa variáveis de sessão anteriores antes de inicializar novo jogo
+    session.pop('bingo_categories', None)
+    session.pop('bingo_selected_player_ids', None)
+    session.pop('bingo_used_player_ids', None)
+    session.pop('bingo_current_player_index', None)
+    session.pop('bingo_wildcard_used', None)
+    session.pop('bingo_skipped', None)
+    session.pop('bingo_game_over', None)
+    session.pop('bingo_result_saved', None)
+    session.pop('bingo_history_game_id', None)
     
     # Inicializa o estado do jogo na sessão
     session['bingo_categories'] = categories
@@ -45,6 +173,8 @@ def home():
     session['bingo_wildcard_used'] = False
     session['bingo_skipped'] = False
     session['bingo_game_over'] = False
+    session['bingo_result_saved'] = False
+    session['bingo_history_game_id'] = history_game.id
     
     # Renderiza a página do jogo
     return render_template('games/game_bingo.html', 
@@ -57,6 +187,22 @@ def get_player():
     """
     Retorna o próximo jogador aleatório para o jogo.
     """
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        from history.model import has_user_played_today, get_today_date_string
+        today = get_today_date_string()
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+        }
+        has_played, _ = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        if has_played:
+            return jsonify({'error': 'Você já jogou este jogo hoje!', 'already_played': True}), 403
+    
     if 'bingo_used_player_ids' not in session:
         return jsonify({'error': 'Jogo não inicializado'}), 400
     
@@ -70,6 +216,29 @@ def get_player():
         total_players = len(selected_player_ids) if selected_player_ids else 0
         used_count = len(used_player_ids)
         remaining_count = total_players - used_count
+        
+        # Se o jogo terminou sem completar o bingo, salva como derrota
+        if 'user_id' in session and not session.get('bingo_result_saved', False):
+            from history.model import save_game_result
+            config_data = {
+                'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+            }
+            try:
+                # Verifica se o bingo foi completado
+                categories = session.get('bingo_categories', [])
+                from games.gameBingo.model import is_bingo_complete
+                bingo_complete = is_bingo_complete(categories)
+                
+                save_game_result(
+                    user_id=session['user_id'],
+                    game_type='bingo',
+                    config_data=config_data,
+                    won=bingo_complete
+                )
+                session['bingo_result_saved'] = True
+                session['bingo_game_over'] = True
+            except Exception as e:
+                print(f"Erro ao salvar histórico: {e}")
         
         return jsonify({
             'player': None,
@@ -113,6 +282,22 @@ def check_match():
     """
     Verifica se o jogador atual corresponde à categoria selecionada.
     """
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        from history.model import has_user_played_today, get_today_date_string
+        today = get_today_date_string()
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+        }
+        has_played, _ = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        if has_played:
+            return jsonify({'error': 'Você já jogou este jogo hoje!', 'already_played': True}), 403
+    
     if 'bingo_categories' not in session:
         return jsonify({'error': 'Jogo não inicializado'}), 400
     
@@ -160,6 +345,26 @@ def check_match():
         bingo_complete = is_bingo_complete(categories)
         completed_lines = get_bingo_lines(categories) if bingo_complete else []
         
+        # Se o bingo foi completado, salva no histórico
+        if bingo_complete and 'user_id' in session and not session.get('bingo_result_saved', False):
+            selected_player_ids = session.get('bingo_selected_player_ids', [])
+            # ConfigHash para Bingo: sequência de jogadores selecionados (ordenados para consistência)
+            config_data = {
+                'selected_player_ids': sorted(selected_player_ids)
+            }
+            try:
+                save_game_result(
+                    user_id=session['user_id'],
+                    game_type='bingo',
+                    config_data=config_data,
+                    won=True
+                )
+                session['bingo_game_over'] = True
+                session['bingo_result_saved'] = True
+            except Exception as e:
+                # Log do erro mas não interrompe o jogo
+                print(f"Erro ao salvar histórico: {e}")
+        
         return jsonify({
             'success': True,
             'is_match': True,
@@ -191,6 +396,22 @@ def skip():
     """
     Pula o jogador atual sem penalidade.
     """
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        from history.model import has_user_played_today, get_today_date_string
+        today = get_today_date_string()
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+        }
+        has_played, _ = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        if has_played:
+            return jsonify({'error': 'Você já jogou este jogo hoje!', 'already_played': True}), 403
+    
     if 'bingo_used_player_ids' not in session:
         return jsonify({'error': 'Jogo não inicializado'}), 400
     
@@ -208,6 +429,22 @@ def use_wildcard():
     Usa o wildcard para completar todas as categorias que o jogador atual cobre.
     Pode ser usado apenas uma vez.
     """
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        from history.model import has_user_played_today, get_today_date_string
+        today = get_today_date_string()
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+        }
+        has_played, _ = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        if has_played:
+            return jsonify({'error': 'Você já jogou este jogo hoje!', 'already_played': True}), 403
+    
     if 'bingo_categories' not in session:
         return jsonify({'error': 'Jogo não inicializado'}), 400
     
@@ -254,6 +491,26 @@ def use_wildcard():
     bingo_complete = is_bingo_complete(categories)
     completed_lines = get_bingo_lines(categories) if bingo_complete else []
     
+    # Se o bingo foi completado, salva no histórico
+    if bingo_complete and 'user_id' in session and not session.get('bingo_result_saved', False):
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        # ConfigHash para Bingo: sequência de jogadores selecionados (ordenados para consistência)
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids)
+        }
+        try:
+            save_game_result(
+                user_id=session['user_id'],
+                game_type='bingo',
+                config_data=config_data,
+                won=True
+            )
+            session['bingo_game_over'] = True
+            session['bingo_result_saved'] = True
+        except Exception as e:
+            # Log do erro mas não interrompe o jogo
+            print(f"Erro ao salvar histórico: {e}")
+    
     # Mensagem baseada no número de categorias completadas
     if len(matched_categories) == 0:
         message = 'Wildcard usado, mas o jogador não corresponde a nenhuma categoria disponível!'
@@ -278,6 +535,22 @@ def get_state():
     """
     Retorna o estado atual do jogo.
     """
+    # Verifica se o usuário já jogou hoje (se estiver logado)
+    if 'user_id' in session:
+        from history.model import has_user_played_today, get_today_date_string
+        today = get_today_date_string()
+        selected_player_ids = session.get('bingo_selected_player_ids', [])
+        config_data = {
+            'selected_player_ids': sorted(selected_player_ids) if selected_player_ids else []
+        }
+        has_played, _ = has_user_played_today(
+            session['user_id'],
+            'bingo',
+            config_data
+        )
+        if has_played:
+            return jsonify({'error': 'Você já jogou este jogo hoje!', 'already_played': True}), 403
+    
     selected_player_ids = session.get('bingo_selected_player_ids', [])
     used_player_ids = session.get('bingo_used_player_ids', [])
     total_players = len(selected_player_ids) if selected_player_ids else 0

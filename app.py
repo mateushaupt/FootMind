@@ -4,6 +4,7 @@ from games.gameWordle.controller import game_wordle_bp
 from games.gameBingo.controller import game_bingo_bp
 from games.gameDuel.controller import game_duel_bp
 from auth.controller import auth_bp
+from history.controller import history_bp
 
 # 1. Importar as configurações e o objeto de extensão (db)
 from config import Config
@@ -40,6 +41,9 @@ def create_app(config_class=Config):
     
     # Registro do Blueprint de Autenticação
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    
+    # Registro do Blueprint de Histórico e Ranking
+    app.register_blueprint(history_bp, url_prefix='')
     
     # Registro do Blueprint do Jogo 1: FootWordle
     app.register_blueprint(game_wordle_bp, url_prefix='/game-wordle')

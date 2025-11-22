@@ -88,10 +88,30 @@ function loadNextPlayer() {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        // Se a resposta for 403 (Forbidden), significa que já jogou
+        if (response.status === 403) {
+            window.location.href = '/game-bingo/';
+            return null;
+        }
+        return response.json();
+    })
     .then(data => {
+        if (!data) return; // Já redirecionou
+        
         if (data.error) {
+            // Se o erro for sobre já ter jogado, redireciona
+            if (data.error.includes('já jogou') || data.already_played) {
+                window.location.href = '/game-bingo/';
+                return;
+            }
             updateStatusMessage(data.error, 'error');
+            return;
+        }
+        
+        if (data.already_played) {
+            // Usuário já jogou - redireciona para tela de resultado
+            window.location.href = '/game-bingo/';
             return;
         }
         
@@ -104,6 +124,10 @@ function loadNextPlayer() {
                 updatePlayersInfo();
             }
             endGame(false, data.message || 'Todos os jogadores foram utilizados!');
+            // Após um delay, redireciona para verificar se já jogou
+            setTimeout(() => {
+                window.location.href = '/game-bingo/';
+            }, 3000);
             return;
         }
         
@@ -194,6 +218,12 @@ function checkMatch(categoryId, isWildcard) {
     })
     .then(response => response.json())
     .then(data => {
+        if (data.already_played) {
+            // Usuário já jogou - redireciona para tela de resultado
+            window.location.href = '/game-bingo/';
+            return;
+        }
+        
         if (data.error) {
             updateStatusMessage(data.error, 'error');
             enableAllCells();
@@ -316,6 +346,12 @@ function useWildcard() {
     })
     .then(response => response.json())
     .then(data => {
+        if (data.already_played) {
+            // Usuário já jogou - redireciona para tela de resultado
+            window.location.href = '/game-bingo/';
+            return;
+        }
+        
         if (data.error) {
             updateStatusMessage(data.error, 'error');
             enableAllCells();
@@ -338,6 +374,10 @@ function useWildcard() {
             if (data.bingo_complete) {
                 setTimeout(() => {
                     endGame(true, 'Parabéns! Você completou o Bingo!');
+                    // Após um delay, redireciona para verificar se já jogou
+                    setTimeout(() => {
+                        window.location.href = '/game-bingo/';
+                    }, 3000);
                 }, 1000);
             } else {
                 // Carrega próximo jogador

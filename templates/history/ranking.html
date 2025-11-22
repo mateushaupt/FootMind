@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ranking-container">
+    <div class="ranking-header">
+        <h1 class="ranking-title">🏆 Ranking</h1>
+        <p class="ranking-subtitle">Veja os melhores jogadores de cada jogo</p>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="ranking-filters">
+        <a href="{{ url_for('history.ranking') }}" class="filter-btn {% if not selected_game_type %}active{% endif %}">
+            Todos os Jogos
+        </a>
+        <a href="{{ url_for('history.ranking', game_type='wordle') }}" class="filter-btn {% if selected_game_type == 'wordle' %}active{% endif %}">
+            FootWordle
+        </a>
+        <a href="{{ url_for('history.ranking', game_type='bingo') }}" class="filter-btn {% if selected_game_type == 'bingo' %}active{% endif %}">
+            Football Bingo
+        </a>
+        <a href="{{ url_for('history.ranking', game_type='duel') }}" class="filter-btn {% if selected_game_type == 'duel' %}active{% endif %}">
+            Game Duel
+        </a>
+    </div>
+    
+    <!-- Posição do Usuário -->
+    {% if user_position %}
+    <div class="user-position-card">
+        <div class="user-position-label">Sua Posição</div>
+        <div class="user-position-value">#{{ user_position }}</div>
+    </div>
+    {% endif %}
+    
+    <!-- Tabela de Ranking -->
+    <div class="ranking-table-section">
+        {% if ranking %}
+        <div class="ranking-table">
+            {% if selected_game_type == 'duel' %}
+            <!-- Ranking para Duel (baseado em pontos) -->
+            <div class="ranking-table-header">
+                <div class="ranking-col-position">Posição</div>
+                <div class="ranking-col-nickname">Jogador</div>
+                <div class="ranking-col-wins">Total de Pontos</div>
+                <div class="ranking-col-games">Melhor Pontuação</div>
+                <div class="ranking-col-rate">Média</div>
+            </div>
+            
+            {% for entry in ranking %}
+            <div class="ranking-table-row {% if entry.user_id == session.get('user_id') %}current-user{% endif %}">
+                <div class="ranking-col-position">
+                    {% if entry.position == 1 %}
+                        🥇
+                    {% elif entry.position == 2 %}
+                        🥈
+                    {% elif entry.position == 3 %}
+                        🥉
+                    {% else %}
+                        #{{ entry.position }}
+                    {% endif %}
+                </div>
+                <div class="ranking-col-nickname">
+                    {{ entry.nickname }}
+                </div>
+                <div class="ranking-col-wins">
+                    {{ entry.total_points }}
+                </div>
+                <div class="ranking-col-games">
+                    {{ entry.best_score }}
+                </div>
+                <div class="ranking-col-rate">
+                    {{ entry.avg_points }}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <!-- Ranking para outros jogos (baseado em vitórias) -->
+            <div class="ranking-table-header">
+                <div class="ranking-col-position">Posição</div>
+                <div class="ranking-col-nickname">Jogador</div>
+                <div class="ranking-col-wins">Vitórias</div>
+                <div class="ranking-col-games">Jogos</div>
+                <div class="ranking-col-rate">Taxa de Vitória</div>
+            </div>
+            
+            {% for entry in ranking %}
+            <div class="ranking-table-row {% if entry.user_id == session.get('user_id') %}current-user{% endif %}">
+                <div class="ranking-col-position">
+                    {% if entry.position == 1 %}
+                        🥇
+                    {% elif entry.position == 2 %}
+                        🥈
+                    {% elif entry.position == 3 %}
+                        🥉
+                    {% else %}
+                        #{{ entry.position }}
+                    {% endif %}
+                </div>
+                <div class="ranking-col-nickname">
+                    {{ entry.nickname }}
+                </div>
+                <div class="ranking-col-wins">
+                    {{ entry.wins }}
+                </div>
+                <div class="ranking-col-games">
+                    {{ entry.total_games }}
+                </div>
+                <div class="ranking-col-rate">
+                    {{ entry.win_rate }}%
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Nenhum jogador encontrado no ranking.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -13,7 +13,10 @@ class UserGame(db.Model):
     gameId = db.Column(db.Integer, db.ForeignKey('HISTORY_GAMES.id'), nullable=False)
     
     # TINYINT mapeado para Integer (0 = Derrota, 1 = Vitória)
-    result = db.Column(db.Integer) 
+    result = db.Column(db.Integer)
+    
+    # Pontos obtidos no jogo (usado principalmente para Duel)
+    points = db.Column(db.Integer, default=0) 
 
     def __repr__(self):
         return f'<UserGame UserID:{self.userId} GameID:{self.gameId} Result:{self.result}>'

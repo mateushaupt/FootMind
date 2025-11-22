@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado do Jogo - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game_result.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-card">
+        <div class="result-icon">
+            {% if won %}
+                <span class="icon-win">🏆</span>
+            {% else %}
+                <span class="icon-loss">😔</span>
+            {% endif %}
+        </div>
+        
+        <h1 class="result-title">
+            {% if won %}
+                Parabéns! Você Venceu!
+            {% else %}
+                Você Perdeu
+            {% endif %}
+        </h1>
+        
+        <div class="result-info">
+            <div class="result-game-type">
+                <span class="info-label">Jogo:</span>
+                <span class="info-value">{{ game_type_display }}</span>
+            </div>
+            
+            <div class="result-date">
+                <span class="info-label">Data:</span>
+                <span class="info-value">{{ date }}</span>
+            </div>
+            
+            {% if answer %}
+            <div class="result-answer">
+                <span class="info-label">Resposta:</span>
+                <span class="info-value">{{ answer }}</span>
+            </div>
+            {% endif %}
+            
+            {% if points is defined and points is not none %}
+            <div class="result-points">
+                <span class="info-label">Pontos:</span>
+                <span class="info-value">{{ points }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="result-message">
+            {% if won %}
+                <p>Você já completou este jogo hoje! Volte amanhã para um novo desafio.</p>
+            {% else %}
+                <p>Você já tentou este jogo hoje. Volte amanhã para tentar novamente!</p>
+            {% endif %}
+        </div>
+        
+        <div class="result-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                Voltar para Início
+            </a>
+            <a href="{{ url_for('history.history') }}" class="btn btn-secondary">
+                Ver Meu Histórico
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
