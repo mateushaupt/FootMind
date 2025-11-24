@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - FootMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1 class="profile-title">👤 Meu Perfil</h1>
+        <p class="profile-subtitle">Gerencie suas informações pessoais</p>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="profile-sections">
+        <!-- Seção de Informações do Usuário -->
+        <div class="profile-section">
+            <h2 class="section-title">Informações da Conta</h2>
+            <div class="info-item">
+                <span class="info-label">Nickname:</span>
+                <span class="info-value" id="current-nickname">{{ user.nickname }}</span>
+            </div>
+        </div>
+        
+        <!-- Seção de Alterar Nickname -->
+        <div class="profile-section">
+            <h2 class="section-title">Alterar Nickname</h2>
+            <form id="updateNicknameForm" class="profile-form">
+                <div class="form-group">
+                    <label for="nickname">Novo Nickname</label>
+                    <input 
+                        type="text" 
+                        id="nickname" 
+                        name="nickname" 
+                        required 
+                        value="{{ user.nickname }}"
+                        placeholder="Digite o novo nickname"
+                        minlength="3"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Atualizar Nickname
+                </button>
+            </form>
+        </div>
+        
+        <!-- Seção de Alterar Senha -->
+        <div class="profile-section">
+            <h2 class="section-title">Alterar Senha</h2>
+            <form id="updatePasswordForm" class="profile-form">
+                <div class="form-group">
+                    <label for="current_password">Senha Atual</label>
+                    <input 
+                        type="password" 
+                        id="current_password" 
+                        name="current_password" 
+                        required 
+                        autocomplete="current-password"
+                        placeholder="Digite sua senha atual"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="new_password">Nova Senha</label>
+                    <input 
+                        type="password" 
+                        id="new_password" 
+                        name="new_password" 
+                        required 
+                        autocomplete="new-password"
+                        placeholder="Digite a nova senha (mín. 6 caracteres)"
+                        minlength="6"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirmar Nova Senha</label>
+                    <input 
+                        type="password" 
+                        id="confirm_password" 
+                        name="confirm_password" 
+                        required 
+                        autocomplete="new-password"
+                        placeholder="Confirme a nova senha"
+                        minlength="6"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Atualizar Senha
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}
+

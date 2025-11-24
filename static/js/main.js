@@ -42,45 +42,98 @@ function setupNavigation() {
         });
     }
 
-    // Link de login (futuro)
-    if (loginLink) {
-        loginLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            // TODO: Implementar modal/login quando autenticação estiver pronta
-            console.log('Login - Em desenvolvimento');
-            // showLoginModal();
-        });
-    }
-
-    // Link de logout (futuro)
+    // Link de logout
     if (logoutLink) {
         logoutLink.addEventListener('click', function(e) {
             e.preventDefault();
-            // TODO: Implementar logout quando autenticação estiver pronta
-            console.log('Logout - Em desenvolvimento');
-            // handleLogout();
+            handleLogout();
         });
     }
 }
 
 /**
  * Verifica o status de autenticação do usuário
- * TODO: Implementar quando autenticação estiver pronta
  */
-function checkAuthenticationStatus() {
-    // Por enquanto, sempre mostra como não logado
-    const isLoggedIn = false; // TODO: Verificar session/cookie
-    
-    const userMenu = document.getElementById('user-menu');
-    const loginLink = document.getElementById('login-link');
-    
-    if (isLoggedIn) {
-        if (userMenu) userMenu.style.display = 'flex';
-        if (loginLink) loginLink.style.display = 'none';
-    } else {
+async function checkAuthenticationStatus() {
+    try {
+        const response = await fetch('/auth/check-auth');
+        const data = await response.json();
+        
+        const userMenu = document.getElementById('user-menu');
+        const navMenu = document.getElementById('nav-menu');
+        const userName = document.getElementById('user-name');
+        
+        if (data.authenticated && data.user) {
+            // Usuário logado
+            if (userMenu) {
+                userMenu.style.display = 'flex';
+            }
+            if (navMenu) {
+                // Esconde links de login/registro
+                const loginLink = document.getElementById('login-link');
+                const registerLink = document.getElementById('register-link');
+                if (loginLink) loginLink.style.display = 'none';
+                if (registerLink) registerLink.style.display = 'none';
+            }
+            if (userName) {
+                userName.textContent = data.user.nickname;
+            }
+        } else {
+            // Usuário não logado
+            if (userMenu) {
+                userMenu.style.display = 'none';
+            }
+            if (navMenu) {
+                // Mostra links de login/registro
+                const loginLink = document.getElementById('login-link');
+                const registerLink = document.getElementById('register-link');
+                if (loginLink) loginLink.style.display = 'inline-block';
+                if (registerLink) registerLink.style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        // Em caso de erro, assume que não está logado
+        const userMenu = document.getElementById('user-menu');
         if (userMenu) userMenu.style.display = 'none';
-        if (loginLink) loginLink.style.display = 'inline-block';
     }
+    
+    // Configura o dropdown do usuário
+    setupUserDropdown();
+}
+
+/**
+ * Configura o dropdown do menu do usuário
+ */
+function setupUserDropdown() {
+    const userNameBtn = document.getElementById('user-name-btn');
+    const dropdownMenu = document.getElementById('user-dropdown-menu');
+    
+    if (!userNameBtn || !dropdownMenu) return;
+    
+    // Toggle dropdown ao clicar no nome do usuário
+    userNameBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+        userNameBtn.classList.toggle('active');
+    });
+    
+    // Fecha dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!userNameBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+            userNameBtn.classList.remove('active');
+        }
+    });
+    
+    // Fecha dropdown ao clicar em um item
+    const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', () => {
+            dropdownMenu.classList.remove('show');
+            userNameBtn.classList.remove('active');
+        });
+    });
 }
 
 /**
@@ -105,14 +158,29 @@ function showLoginModal() {
 
 /**
  * Processa logout do usuário
- * TODO: Implementar quando autenticação estiver pronta
  */
-function handleLogout() {
-    // Implementação futura
-    console.log('Processar logout');
-    // Fazer requisição para /logout
-    // Limpar session/cookies
-    // Recarregar página
+async function handleLogout() {
+    try {
+        const response = await fetch('/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Recarrega a página para atualizar o estado
+            window.location.href = '/';
+        } else {
+            console.error('Erro ao fazer logout:', data.message);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer logout:', error);
+        // Mesmo com erro, tenta recarregar a página
+        window.location.href = '/';
+    }
 }
 
 // ============================================
